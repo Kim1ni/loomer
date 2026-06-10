@@ -17,5 +17,8 @@ COPY . .
 # Cloud Run injects the PORT environment variable
 ENV PORT=8080
 
-# Run the FastAPI app using uvicorn
-CMD uv run uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
+# Install dependencies and sync into a virtual environment
+RUN uv sync --frozen --no-dev
+
+# Run uvicorn directly
+CMD [".venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
