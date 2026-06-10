@@ -1,0 +1,51 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - master # Change this to 'main' if your default branch is main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  REPO_NAME: loomer-repo
+  SERVICE_NAME: loomer-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker to use Google Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_NAME=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          # These env vars will be securely passed into your live server!
+          env_vars: |
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+            YOUTUBE_DATA_API_KEY=${{ secrets.YOUTUBE_DATA_API_KEY }}
+
+          flags: '--allow-unauthenticated --port=8080'

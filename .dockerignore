@@ -1,0 +1,32 @@
+# Environments
+.env
+.venv
+env/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs / Editors
+.idea/
+.vscode/
+.DS_Store
+
+# Google ADK specific
+.adk/
+.agents/
+
+# Docker/Git
+Dockerfile
+.git/
+.gitignore
+.github/
+
+# Testing
+.pytest_cache/
+test/
+
+# Markdown/Docs
+*.md
