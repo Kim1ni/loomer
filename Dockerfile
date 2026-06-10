@@ -8,17 +8,15 @@ WORKDIR /app
 # Copy the dependency files first (for caching)
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies (excluding dev dependencies)
+# Install dependencies into a virtual environment
 RUN uv sync --frozen --no-dev
 
 # Copy the rest of the application
 COPY . .
 
 # Cloud Run injects the PORT environment variable
+# We set a default just in case, but Cloud Run will override it.
 ENV PORT=8080
 
-# Install dependencies and sync into a virtual environment
-RUN uv sync --frozen --no-dev
-
-# Run uvicorn directly
+# Run uvicorn directly from the virtual environment
 CMD [".venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
