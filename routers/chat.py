@@ -12,7 +12,7 @@ from google.adk.plugins import LoggingPlugin
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 
-from loom_agent.agent import root_agent
+from loom_agent.agent import get_root_agent
 
 import uuid
 
@@ -22,22 +22,31 @@ router = APIRouter(prefix="/loom/chat", tags=["Chat"])
 
 APP_NAME="loom_app"
 session_service = InMemorySessionService()
-loom_app = App(
-    name=APP_NAME,
-    root_agent=root_agent,
-    events_compaction_config=EventsCompactionConfig(
-        compaction_interval=5,
-        overlap_size=1
-    ),
-    plugins=[
-        LoggingPlugin()
-    ]
-)
 
-runner = Runner(
-    app=loom_app,
-    session_service=session_service,
-)
+# Initialize these once, but get_root_agent() will lazy-load the agent on first use
+_loom_app = None
+_runner = None
+
+def get_loom_app():
+    """Lazy initialize the Loom app and runner"""
+    global _loom_app, _runner
+    if _loom_app is None:
+        _loom_app = App(
+            name=APP_NAME,
+            root_agent=get_root_agent(),
+            events_compaction_config=EventsCompactionConfig(
+                compaction_interval=5,
+                overlap_size=1
+            ),
+            plugins=[
+                LoggingPlugin()
+            ]
+        )
+        _runner = Runner(
+            app=_loom_app,
+            session_service=session_service,
+        )
+    return _loom_app, _runner
 
 
 class ChatRequest(BaseModel):
@@ -51,6 +60,7 @@ def _sse(event: str, data: dict) -> str:
 
 async def _stream(request: ChatRequest) -> AsyncGenerator[str, None]:
     session_id = request.session_id or f"session-{uuid.uuid4().hex[:8]}"
+    _, runner = get_loom_app()
 
     existing = await session_service.get_session(
         app_name=APP_NAME,
