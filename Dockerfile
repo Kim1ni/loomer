@@ -21,5 +21,5 @@ COPY . .
 # We set a default just in case, but Cloud Run will override it.
 ENV PORT=8080
 
-# Run uvicorn directly from the virtual environment
-CMD [".venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run uvicorn using uv to ensure proper virtual environment handling
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
