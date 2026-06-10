@@ -4,7 +4,10 @@ from shared.consts import EMBEDDING_MODEL
 from shared.db import db
 import time
 
-model = SentenceTransformer(EMBEDDING_MODEL)
+model = SentenceTransformer(
+    model_name_or_path=EMBEDDING_MODEL,
+    cache_folder="./model_cache"
+)
 
 def embed(text: str) -> list[float]:
     """Converts text to a vector embedding."""

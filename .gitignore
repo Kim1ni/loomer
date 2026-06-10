@@ -40,6 +40,9 @@ htmlcov/
 .adk/
 .agents/
 
+# Model Cache
+./model_cache
+
 # Build/distribution
 dist/
 build/
